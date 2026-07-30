@@ -6,44 +6,10 @@ on:
     branches:
       - main
   pull_request:
-  schedule:
-    # 12:00 PM MST = 19:00 UTC
-    - cron: '0 19 * * *'
 
 jobs:
-  check-updates:
-    name: Check for Recent Updates
-    runs-on: ubuntu-latest
-    outputs:
-      has_updates: ${{ steps.check.outputs.has_updates }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - id: check
-        run: |
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            LAST_COMMIT_TIME=$(git log -1 --format=%ct)
-            NOW=$(date +%s)
-            DIFF=$((NOW - LAST_COMMIT_TIME))
-            # 86400 seconds = 24 hours
-            if [ "$DIFF" -gt 86400 ]; then
-              echo "No updates in the last 24 hours. Skipping build."
-              echo "has_updates=false" >> $GITHUB_OUTPUT
-            else
-              echo "Updates found in the last 24 hours. Proceeding with build."
-              echo "has_updates=true" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "Workflow triggered manually or via push/PR. Proceeding with build."
-            echo "has_updates=true" >> $GITHUB_OUTPUT
-          fi
-
   build-macos-arm64:
     name: macOS ARM64 (Apple Silicon)
-    needs: check-updates
-    if: needs.check-updates.outputs.has_updates == 'true'
     runs-on: macos-latest
 
     steps:
@@ -67,8 +33,6 @@ jobs:
 
   build-windows-x64:
     name: Windows x64
-    needs: check-updates
-    if: needs.check-updates.outputs.has_updates == 'true'
     runs-on: windows-latest
 
     steps:
@@ -92,8 +56,6 @@ jobs:
 
   build-windows-arm64:
     name: Windows ARM64
-    needs: check-updates
-    if: needs.check-updates.outputs.has_updates == 'true'
     runs-on: windows-latest
 
     steps:
@@ -119,8 +81,6 @@ jobs:
 
   build-linux-x64:
     name: Linux x64
-    needs: check-updates
-    if: needs.check-updates.outputs.has_updates == 'true'
     runs-on: ubuntu-24.04
 
     steps:
@@ -154,35 +114,3 @@ jobs:
         with:
           name: socialtap-linux-x64
           path: src-tauri/target/release/bundle/**
-
-  release-nightly:
-    name: Create Nightly Release
-    needs:
-      - check-updates
-      - build-macos-arm64
-      - build-windows-x64
-      - build-windows-arm64
-      - build-linux-x64
-    if: needs.check-updates.outputs.has_updates == 'true' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: release-artifacts
-
-      - name: Publish Nightly Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: nightly
-          name: "SocialTap Nightly Build"
-          body: "Automated nightly release built on commit ${{ github.sha }}."
-          prerelease: true
-          files: release-artifacts/**/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
