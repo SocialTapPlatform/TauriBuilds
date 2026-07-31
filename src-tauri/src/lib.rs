@@ -12,3 +12,19 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+use notify_rust::Notification;
+
+#[tauri::command]
+fn show_native_notification(title: String, body: String) -> Result<(), String> {
+    Notification::new()
+        .summary(&title)
+        .body(&body)
+        .show()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+tauri::Builder::default()
+    .invoke_handler(tauri::generate_handler![show_native_notification])
+    .run(tauri::generate_context!())
+    .expect("error while running tauri application");

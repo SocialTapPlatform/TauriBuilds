@@ -3,8 +3,10 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": ["main"],
+  "remote": { "urls": ["https://socialtap.social/*"] },
   "permissions": [
     "core:default",
-    "opener:default"
+    "opener:default",
+    "notification:default"
   ]
 }
