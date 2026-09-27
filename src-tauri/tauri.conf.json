@@ -16,7 +16,9 @@
         "title": "SocialTap",
         "width": 1000,
         "height": 700,
-        "userAgent": "SocialTap Desktop Client v4.5.0"
+        "userAgent": "SocialTap Desktop Client v4.5.0",
+        "create": false,
+        "backgroundThrottling": "disabled"
       }
     ],
     "security": {
